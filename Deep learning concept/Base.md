@@ -1,10 +1,13 @@
-Basic Concept
+*Basic Concept
+
 	•	Neuron
 	•	Cell Body : brain of neuron 
 	•	Dendrites : it receives the messages from the other cells: receivers 
 	•	Axon: it transmits messages or signal to other cells: Transformers
 	•	Terminals: it passes signals to other neurons 
-Neural network 
+ 
+*Neural network 
+
 	•	Input layer
 	•	Hidden layer
 	•	Output layer
@@ -16,14 +19,20 @@ Neural network
 	•	Learning rate
 	•	Forwards and Backwards Backpropagation
 
-Activation function
-It is used to determine the output of neural network like yes or no. It maps the resulting values in between 0 to 1 or -1 to 1 etc. (depending upon the function).
-The Activation Functions can be basically divided into 2 types-
+*Activation function
+
+It is used to determine the output of neural network like yes or no. 
+It maps the resulting values in between 0 to 1 or -1 to 1 etc. (depending upon the function).
+
+The Activation Functions can be basically divided into 2 types:
+
 	•	Linear Activation Function
 	•	Threshold function
 	•	Non-linear Aktivation Funktion
 	•	Sigmoid function 
+ 
 It has non linearity, it has analog activation. The sigmoid is a mathematical function that maps input values to a value between 0 and 1, making it useful for binary classification and logistic regression problems.
+
 	•	Hyperbolic Tangent function 
 It is similar to sigmoid function, the value is between -1 and 1. It can be reformulated to sigmoid function. The slop of change in the middle part is stronger than sigmid
 	•	ReLU
@@ -31,7 +40,8 @@ It is very famous function, if x is above 0 is x, otherwise it is 0. It prevents
 Which function we should use? It depends
 Do we have a regression model or classification model? ReLU , you can use and training is faster, Sigmoid is good for classification, it depends to data , model etc
 
-Cost function
+*Cost function
+
 It is the difference between the predicted output and the Actual value. The result of cost function will be feedbacked to the neural network, it will be used to adjust the weights. The goal is changing the weights that minimizing the cost weight.
 
 Gradient decent optimization
@@ -40,12 +50,16 @@ We have two type of gradient decent:
 	•	Batch Gradient descent: we give the whole rows to the network and then update the weights. Redundant computation, high computational time, cannot deal with non-convex functions
 	•	Stochastic Gradient Descent: we give rows by rows to the network, low computational time, can find the global optimum , it is better, we call it SGD as well. In SGD, instead of using the entire dataset for each iteration, only a single random training example (or a small batch) is selected to calculate the gradient and update the model parameters
 
-Learning rate
+*Learning rate
 To find out the global minimum, it should not be too high and we don’t have convergence but divergence, if it is too low, it would be too slow
-Forwards and Backwards Backpropagation
+
+*Forwards and Backwards Backpropagation
+
 We give our data as input layer, we give this to hidden layers and neurons, based on weights that initially are random initialized, the output will be created and will be compared to the actual values to compute the cost function, then we adjust the weights in backpropagation. The weights that are responsible for those errors are being updated. This process will be repeated to compute the minimum the cost function.   This is the simplest network that we call it Feedforward backward network. 
 Convolutional layer
-What is image filter(kernel)?
+
+*What is image filter(kernel)?
+
 In image processing, a kernel, convolution matrix, or mask is a small matrix used for blurring, sharpening, embossing, edge detection, and more. This is accomplished by doing a convolution between the kernel and an image.
 Typically filters are 3*3, it can be 5*5 or more, but mostly are 3*3.
 
@@ -70,7 +84,8 @@ Flattening layer
 After pooling layer we will have many polled feature maps, but to give it to fully connected layer we need to flatten them to 1 D, we use flattening layer
 Input layer, convolutional layer, pooling layer, ReLu activation layer (to introduce non linearity), convolutional layer, pooling layer, .., flattening layer to make it one dimension to give it to fully connected layer. 
 
-Stride 
+*Stride 
+
 Stride determines how many squares or pixels our filters skip when they move across the image, from left to right and from top to bottom. 
 Stride is a Convolution Neural Network technique which has two main features. The first is to reduce the size of the output feature map. This is because the filter only overlaps with a subset of the input feature map so that the output feature map will be small, and it helps reduce the computational complexity.
 The second is the overlap of the receptive field. The receptive field is the area of the input feature map that is used to calculate the output of a neuron. 
