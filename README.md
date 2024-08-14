@@ -1,4 +1,4 @@
-# Compmuter Vision Road Map 📚
+# Computer Vision Road Map 📚
 
 Welcome to my advanced repository dedicated to deepening my expertise in Computer Vision. 
 As a PhD in Computer Science with a specialization in Computer Vision, this repository serves as a comprehensive log of my additional studies, research, and practical experiences.
