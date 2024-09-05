@@ -1,36 +1,68 @@
 import cv2
 import numpy as np
 
-# Load the image in grayscale
-image = cv2.imread('your_image.jpg', cv2.IMREAD_GRAYSCALE)
+# Load the binary image (0 and 255 values only)
+image = cv2.imread('your_binary_image.jpg', cv2.IMREAD_GRAYSCALE)
 
-# Apply Sobel operator to find gradients in the x direction (left to right)
-sobelx = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Sobel X (horizontal gradient)
+# Ensure the image is binary
+_, binary = cv2.threshold(image, 127, 255, cv2.THRESH_BINARY)
 
-# Threshold to keep only positive gradients (dark to light from left to right)
-sobelx_positive = np.maximum(sobelx, 0)  # Keep only positive gradients
+# Divide the image into left and right parts
+height, width = binary.shape
+left_half = binary[:, :width // 2]
+right_half = binary[:, width // 2:]
 
-# Normalize and convert to 8-bit format for visualization
-sobelx_positive = cv2.normalize(sobelx_positive, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+# Function to find and keep the most significant left or right patch
+def keep_significant_patch(part, keep_left=True):
+    # Find all connected components
+    num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(part, connectivity=8)
 
-# Create a mask to keep only the left edge of the rectangle
-# Assuming the left edge is within the left half of the image
-height, width = sobelx_positive.shape
-mask = np.zeros_like(sobelx_positive)
-mask[:, :width // 2] = 255  # Keep only the left half
+    # Initialize the mask for the significant patch
+    significant_mask = np.zeros_like(part)
 
-# Apply the mask to get only the left edge
-left_edge = cv2.bitwise_and(sobelx_positive, sobelx_positive, mask=mask)
+    # Sort components based on the x-coordinate of the bounding box
+    if keep_left:
+        # Sort by the leftmost x-coordinate (smallest to largest)
+        sorted_indices = np.argsort(stats[:, cv2.CC_STAT_LEFT])
+    else:
+        # Sort by the rightmost x-coordinate (largest to smallest)
+        sorted_indices = np.argsort(stats[:, cv2.CC_STAT_LEFT] + stats[:, cv2.CC_STAT_WIDTH])[::-1]
 
-# Optional: Find contours to refine the left edge detection
-contours, _ = cv2.findContours(left_edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-left_edge_refined = np.zeros_like(left_edge)
-if contours:
-    # Find the leftmost contour point
-    leftmost_contour = min(contours, key=lambda c: cv2.boundingRect(c)[0])
-    cv2.drawContours(left_edge_refined, [leftmost_contour], -1, 255, 1)
+    # Iterate through the sorted components
+    for i in sorted_indices:
+        if i == 0:  # Skip the background
+            continue
 
-# Display the result
-cv2.imshow('Left Edge Only', left_edge_refined)
+        # Get bounding box of the component
+        x, y, w, h, area = stats[i]
+
+        # Check if the component is roughly vertically aligned (adjust tolerance as needed)
+        if w < part.shape[1] * 0.3:  # Example condition: width should be less than 30% of the part width
+            # Add this component to the mask
+            significant_mask[labels == i] = 255
+
+            # Remove all pixels to the right (if left part) or left (if right part)
+            if keep_left:
+                part[:, x + w:] = 0  # Remove pixels to the right
+            else:
+                part[:, :x] = 0  # Remove pixels to the left
+
+            break  # Keep only the most significant patch
+
+    return significant_mask
+
+# Process the left half to keep only the leftmost patch or line
+left_significant = keep_significant_patch(left_half, keep_left=True)
+
+# Process the right half to keep only the rightmost patch or line
+right_significant = keep_significant_patch(right_half, keep_left=False)
+
+# Combine the two parts
+result = np.zeros_like(binary)
+result[:, :width // 2] = left_significant
+result[:, width // 2:] = right_significant
+
+# Display the final result
+cv2.imshow('Result', result)
 cv2.waitKey(0)
 cv2.destroyAllWindows()
