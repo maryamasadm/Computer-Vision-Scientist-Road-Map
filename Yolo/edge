@@ -12,12 +12,13 @@ height, width = binary.shape
 left_half = binary[:, :width // 2]
 right_half = binary[:, width // 2:]
 
-# Function to find and keep all significant patches that are vertically aligned directly
-def keep_significant_patches_direct_overlap(part, keep_left=True):
+# Function to find and keep the most significant patch that is vertically aligned directly
+def keep_significant_patches_direct_overlap(part, keep_left=True, min_distance=5):
     """
     Parameters:
     - part: The half image to process.
     - keep_left: Whether to keep the leftmost or rightmost patches.
+    - min_distance: The minimum distance between patches to consider them separate.
     """
     # Find all connected components
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(part, connectivity=8)
@@ -51,9 +52,13 @@ def keep_significant_patches_direct_overlap(part, keep_left=True):
             if x < bx + bw and bx < x + w:
                 is_aligned = True
                 break
+            # Also, check if the current component is too close horizontally to any previously kept component
+            elif abs(x - bx) <= min_distance or abs((x + w) - (bx + bw)) <= min_distance:
+                is_aligned = True
+                break
 
         # If aligned or the first component, add to significant mask and update the bounding boxes
-        if is_aligned or not aligned_boxes:
+        if not is_aligned:
             aligned_boxes.append((x, y, w, h))
             significant_mask[labels == i] = 255
 
@@ -66,10 +71,10 @@ def keep_significant_patches_direct_overlap(part, keep_left=True):
     return significant_mask
 
 # Process the left half to keep all vertically aligned patches or lines
-left_significant = keep_significant_patches_direct_overlap(left_half, keep_left=True)
+left_significant = keep_significant_patches_direct_overlap(left_half, keep_left=True, min_distance=5)
 
 # Process the right half to keep all vertically aligned patches or lines
-right_significant = keep_significant_patches_direct_overlap(right_half, keep_left=False)
+right_significant = keep_significant_patches_direct_overlap(right_half, keep_left=False, min_distance=5)
 
 # Combine the two parts
 result = np.zeros_like(binary)
