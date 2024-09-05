@@ -1,0 +1,37 @@
+
+
+
+import cv2
+import numpy as np
+
+# Load the image in grayscale
+image = cv2.imread('your_image.jpg', cv2.IMREAD_GRAYSCALE)
+
+# Apply Sobel operator to find gradients in the x direction (left to right)
+sobelx = cv2.Sobel(image, cv2.CV_64F, 1, 0, ksize=3)  # Sobel X (horizontal gradient)
+
+# Threshold to keep only the positive gradients (dark to light from left to right)
+sobelx_positive = np.maximum(sobelx, 0)  # Keep only positive gradients
+
+# Normalize and convert to 8-bit format for visualization
+sobelx_positive = cv2.normalize(sobelx_positive, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+
+# Apply a mask to keep only the left side of the object
+# Assuming the object is roughly in the center, adjust accordingly
+height, width = sobelx_positive.shape
+mask = np.zeros_like(sobelx_positive)
+mask[:, :width // 2] = 255  # Keep only the left half
+
+# Apply the mask to get only the left side edge
+left_edge = cv2.bitwise_and(sobelx_positive, sobelx_positive, mask=mask)
+
+# Optional: Find contours and keep the outermost one if needed
+contours, _ = cv2.findContours(left_edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+outer_edge = np.zeros_like(left_edge)
+if contours:
+    cv2.drawContours(outer_edge, contours, -1, 255, 1)  # Draw the outermost contour
+
+# Display the result
+cv2.imshow('Left Side Edge', outer_edge)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
