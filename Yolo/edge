@@ -12,12 +12,12 @@ height, width = binary.shape
 left_half = binary[:, :width // 2]
 right_half = binary[:, width // 2:]
 
-# Function to find and keep the most significant left or right patch
-def keep_significant_patch(part, keep_left=True):
+# Function to find and keep all significant patches that are vertically aligned
+def keep_significant_patches(part, keep_left=True):
     # Find all connected components
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(part, connectivity=8)
 
-    # Initialize the mask for the significant patch
+    # Initialize the mask for significant patches
     significant_mask = np.zeros_like(part)
 
     # Sort components based on the x-coordinate of the bounding box
@@ -28,7 +28,10 @@ def keep_significant_patch(part, keep_left=True):
         # Sort by the rightmost x-coordinate (largest to smallest)
         sorted_indices = np.argsort(stats[:, cv2.CC_STAT_LEFT] + stats[:, cv2.CC_STAT_WIDTH])[::-1]
 
-    # Iterate through the sorted components
+    # List to store bounding boxes of vertically aligned patches
+    aligned_boxes = []
+
+    # Iterate through sorted components
     for i in sorted_indices:
         if i == 0:  # Skip the background
             continue
@@ -36,9 +39,17 @@ def keep_significant_patch(part, keep_left=True):
         # Get bounding box of the component
         x, y, w, h, area = stats[i]
 
-        # Check if the component is roughly vertically aligned (adjust tolerance as needed)
-        if w < part.shape[1] * 0.3:  # Example condition: width should be less than 30% of the part width
-            # Add this component to the mask
+        # Check if the component is roughly vertically aligned with any previously found patch
+        is_aligned = False
+        for bx, by, bw, bh in aligned_boxes:
+            # Check if the x-coordinates overlap or are close enough
+            if x < bx + bw and bx < x + w:
+                is_aligned = True
+                break
+
+        # If aligned, add to significant mask and update the bounding boxes
+        if is_aligned or not aligned_boxes:
+            aligned_boxes.append((x, y, w, h))
             significant_mask[labels == i] = 255
 
             # Remove all pixels to the right (if left part) or left (if right part)
@@ -47,15 +58,13 @@ def keep_significant_patch(part, keep_left=True):
             else:
                 part[:, :x] = 0  # Remove pixels to the left
 
-            break  # Keep only the most significant patch
-
     return significant_mask
 
-# Process the left half to keep only the leftmost patch or line
-left_significant = keep_significant_patch(left_half, keep_left=True)
+# Process the left half to keep all vertically aligned patches or lines
+left_significant = keep_significant_patches(left_half, keep_left=True)
 
-# Process the right half to keep only the rightmost patch or line
-right_significant = keep_significant_patch(right_half, keep_left=False)
+# Process the right half to keep all vertically aligned patches or lines
+right_significant = keep_significant_patches(right_half, keep_left=False)
 
 # Combine the two parts
 result = np.zeros_like(binary)
