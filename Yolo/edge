@@ -12,13 +12,12 @@ height, width = binary.shape
 left_half = binary[:, :width // 2]
 right_half = binary[:, width // 2:]
 
-# Function to find and keep all significant patches that are vertically aligned
-def keep_significant_patches(part, keep_left=True, tolerance=20):
+# Function to find and keep all significant patches that are vertically aligned directly
+def keep_significant_patches_direct_overlap(part, keep_left=True):
     """
     Parameters:
     - part: The half image to process.
     - keep_left: Whether to keep the leftmost or rightmost patches.
-    - tolerance: The allowed tolerance for considering two patches as aligned (in pixels).
     """
     # Find all connected components
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(part, connectivity=8)
@@ -45,15 +44,15 @@ def keep_significant_patches(part, keep_left=True, tolerance=20):
         # Get bounding box of the component
         x, y, w, h, area = stats[i]
 
-        # Check if the component is roughly vertically aligned with any previously found patch
+        # Check if the component is directly vertically aligned with any previously found patch
         is_aligned = False
         for bx, by, bw, bh in aligned_boxes:
-            # Adjust overlap condition to include tolerance
-            if (x < bx + bw + tolerance) and (bx < x + w + tolerance):
+            # Check for direct vertical overlap in the x-coordinate range
+            if x < bx + bw and bx < x + w:
                 is_aligned = True
                 break
 
-        # If aligned, add to significant mask and update the bounding boxes
+        # If aligned or the first component, add to significant mask and update the bounding boxes
         if is_aligned or not aligned_boxes:
             aligned_boxes.append((x, y, w, h))
             significant_mask[labels == i] = 255
@@ -67,10 +66,10 @@ def keep_significant_patches(part, keep_left=True, tolerance=20):
     return significant_mask
 
 # Process the left half to keep all vertically aligned patches or lines
-left_significant = keep_significant_patches(left_half, keep_left=True, tolerance=20)
+left_significant = keep_significant_patches_direct_overlap(left_half, keep_left=True)
 
 # Process the right half to keep all vertically aligned patches or lines
-right_significant = keep_significant_patches(right_half, keep_left=False, tolerance=20)
+right_significant = keep_significant_patches_direct_overlap(right_half, keep_left=False)
 
 # Combine the two parts
 result = np.zeros_like(binary)
