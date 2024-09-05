@@ -13,7 +13,13 @@ left_half = binary[:, :width // 2]
 right_half = binary[:, width // 2:]
 
 # Function to find and keep all significant patches that are vertically aligned
-def keep_significant_patches(part, keep_left=True):
+def keep_significant_patches(part, keep_left=True, tolerance=20):
+    """
+    Parameters:
+    - part: The half image to process.
+    - keep_left: Whether to keep the leftmost or rightmost patches.
+    - tolerance: The allowed tolerance for considering two patches as aligned (in pixels).
+    """
     # Find all connected components
     num_labels, labels, stats, centroids = cv2.connectedComponentsWithStats(part, connectivity=8)
 
@@ -42,8 +48,8 @@ def keep_significant_patches(part, keep_left=True):
         # Check if the component is roughly vertically aligned with any previously found patch
         is_aligned = False
         for bx, by, bw, bh in aligned_boxes:
-            # Check if the x-coordinates overlap or are close enough
-            if x < bx + bw and bx < x + w:
+            # Adjust overlap condition to include tolerance
+            if (x < bx + bw + tolerance) and (bx < x + w + tolerance):
                 is_aligned = True
                 break
 
@@ -61,10 +67,10 @@ def keep_significant_patches(part, keep_left=True):
     return significant_mask
 
 # Process the left half to keep all vertically aligned patches or lines
-left_significant = keep_significant_patches(left_half, keep_left=True)
+left_significant = keep_significant_patches(left_half, keep_left=True, tolerance=20)
 
 # Process the right half to keep all vertically aligned patches or lines
-right_significant = keep_significant_patches(right_half, keep_left=False)
+right_significant = keep_significant_patches(right_half, keep_left=False, tolerance=20)
 
 # Combine the two parts
 result = np.zeros_like(binary)
